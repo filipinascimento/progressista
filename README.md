@@ -137,6 +137,8 @@ invocation.
   utility if you want to embed the app elsewhere.
 - `progressista.client.RemoteTqdm` gives programmatic access to the client.
 - `progressista.cli` provides the Typer-based commands used by the entry point.
+- Version strings live in `progressista/__init__.py` and are managed by Hatch
+  (`[tool.hatch.version]`). Use `make sync-version TAG=vX.Y.Z` before tagging a release.
 
 ## Development
 
@@ -144,13 +146,17 @@ invocation.
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
-pytest
+make test
+make docs
+make version  # prints the git-derived version
 ```
 
 ## Documentation
 
 Additional docs live in [`docs/`](docs/):
 
+- MkDocs site: https://filipinascimento.github.io/progressista/
+- Run `make docs-serve` for a live preview (`mkdocs serve`).
 - [`docs/architecture.md`](docs/architecture.md) — system design and data flow.
 - [`docs/server.md`](docs/server.md) — FastAPI endpoints and configuration.
 - [`docs/client.md`](docs/client.md) — client API and integration notes.

@@ -32,8 +32,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[docs]
 
+      - name: Show project version
+        run: make version
+
       - name: Build documentation
-        run: mkdocs build --strict
+        run: make docs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

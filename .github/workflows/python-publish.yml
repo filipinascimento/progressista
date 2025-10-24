@@ -26,11 +26,27 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Build release distributions
+      - name: Install build tooling
         run: |
-          # NOTE: put your own distribution build steps here.
-          python -m pip install build
-          python -m build
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Show project version
+        run: make version
+
+      - name: Validate release tag matches project version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          TAG="${RELEASE_TAG#v}"
+          VERSION=$(python scripts/get_version.py)
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "Version mismatch: tag ${RELEASE_TAG} vs project ${VERSION}"
+            exit 1
+          fi
+
+      - name: Build release distributions
+        run: make build
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4

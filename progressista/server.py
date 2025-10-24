@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from . import __version__
 from .settings import ServerSettings
 
 LOGGER = logging.getLogger("progressista.server")
@@ -52,7 +53,7 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
     """Create and configure the FastAPI application."""
 
     settings = settings or ServerSettings()
-    app = FastAPI(title="Progressista", version="0.1.0")
+    app = FastAPI(title="Progressista", version=__version__)
     static_dir = resources.files("progressista") / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
