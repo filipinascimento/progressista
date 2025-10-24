@@ -3,7 +3,19 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
+from typing import TypeVar
+
+
+T = TypeVar("T")
+
+if sys.version_info >= (3, 10):
+    def _slotted_dataclass(cls: T) -> T:
+        return dataclass(slots=True)(cls)  # type: ignore[arg-type]
+else:  # pragma: no cover - only exercised on Python < 3.10
+    def _slotted_dataclass(cls: T) -> T:
+        return dataclass(cls)  # type: ignore[arg-type]
 
 
 def _float_env(name: str, default: float) -> float:
@@ -26,7 +38,7 @@ def _int_env(name: str, default: int) -> int:
         return default
 
 
-@dataclass(slots=True)
+@_slotted_dataclass
 class ServerSettings:
     """Settings that control the FastAPI server runtime."""
 
@@ -53,7 +65,7 @@ class ServerSettings:
             self.api_tokens = (token,) if token else ()
 
 
-@dataclass(slots=True)
+@_slotted_dataclass
 class ClientSettings:
     """Settings for the RemoteTqdm client."""
 
