@@ -1,6 +1,6 @@
 """Progressista exposes a remote-friendly tqdm wrapper and FastAPI dashboard."""
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 try:  # pragma: no cover - metadata import is environment dependent
     from importlib import metadata as _metadata
