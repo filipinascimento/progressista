@@ -45,7 +45,7 @@
 
 | Component | Version |
 | --- | --- |
-| Python | 3.9+ |
+| Python | 3.10+ |
 | FastAPI | 0.110+ |
 | browsers | Latest Chrome, Firefox, Safari, Edge (tested on evergreen releases) |
 

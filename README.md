@@ -23,7 +23,7 @@ WebSocket so you can monitor many worker bars from a single browser tab.
 ## Quick start
 
 ```bash
-# 1. Install locally (requires Python 3.9+)
+# 1. Install locally (requires Python 3.10+)
 pip install -e .
 
 # 2. Run the server
