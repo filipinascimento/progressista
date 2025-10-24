@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Progressista Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: #f6f8fb;
+        color: #1b1f24;
+      }
+      body {
+        margin: 0;
+        background: inherit;
+        color: inherit;
+      }
+      header {
+        padding: 1.5rem 2rem 1rem;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0;
+      }
+      #status {
+        font-size: 0.9rem;
+        opacity: 0.7;
+      }
+      main {
+        padding: 0 2rem 2.5rem;
+        max-width: 1040px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .toolbar-buttons {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 0.45rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        background: #2563eb;
+        color: #fff;
+        transition: opacity 120ms ease;
+      }
+      button.secondary {
+        background: rgba(37, 99, 235, 0.12);
+        color: #2563eb;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      button:not(:disabled):hover {
+        opacity: 0.8;
+      }
+      .board {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .board h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+      }
+      .cards.compact {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .card {
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        padding: 1.1rem 1.3rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        position: relative;
+      }
+      .card h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .card-actions {
+        display: flex;
+        gap: 0.25rem;
+      }
+      .card-action {
+        border: none;
+        background: rgba(15, 23, 42, 0.08);
+        color: inherit;
+        border-radius: 8px;
+        padding: 0.3rem 0.55rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+      .card-action:hover {
+        background: rgba(37, 99, 235, 0.2);
+      }
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: rgba(27, 31, 36, 0.7);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.75rem;
+        background: rgba(37, 99, 235, 0.12);
+        border-radius: 999px;
+        padding: 0.2rem 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .badge.stale {
+        background: rgba(234, 179, 8, 0.18);
+        color: #854d0e;
+      }
+      .badge.close {
+        background: rgba(34, 197, 94, 0.16);
+        color: #166534;
+      }
+      .bar {
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(56, 87, 146, 0.12);
+        overflow: hidden;
+      }
+      .fill {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #2563eb, #38bdf8);
+        transition: width 200ms ease-in-out;
+      }
+      .card[data-status="close"] .fill {
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+      }
+      .card[data-status="error"] .fill {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+      }
+      .card[data-status="stale"] .fill {
+        background: linear-gradient(90deg, #facc15, #f97316);
+      }
+      .empty {
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        text-align: left;
+        color: rgba(27, 31, 36, 0.6);
+      }
+      .more-note {
+        font-size: 0.8rem;
+        color: rgba(27, 31, 36, 0.55);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          background: #0f172a;
+          color: #e2e8f0;
+        }
+        .card {
+          background: #111827;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        .card-action {
+          background: rgba(148, 163, 184, 0.2);
+        }
+        .card-action:hover {
+          background: rgba(148, 163, 184, 0.35);
+        }
+        .meta {
+          color: rgba(226, 232, 240, 0.7);
+        }
+        .bar {
+          background: rgba(59, 130, 246, 0.2);
+        }
+        button.secondary {
+          background: rgba(96, 165, 250, 0.18);
+          color: #93c5fd;
+        }
+        .badge.stale {
+          background: rgba(217, 119, 6, 0.35);
+          color: #fef3c7;
+        }
+        .badge.close {
+          background: rgba(34, 197, 94, 0.3);
+          color: #bbf7d0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Progressista Dashboard</h1>
+      <span id="status">Connecting…</span>
+    </header>
+    <main>
+      <section class="toolbar">
+        <div class="toolbar-buttons">
+          <button id="clear-completed" class="secondary" type="button">Clear completed</button>
+          <button id="clear-stale" class="secondary" type="button">Clear stale</button>
+        </div>
+        <span id="counts" class="meta">—</span>
+      </section>
+      <section class="board">
+        <h2>Active</h2>
+        <div id="active-cards" class="cards"></div>
+        <div id="active-empty" class="empty" hidden>No active tasks.</div>
+      </section>
+      <section class="board">
+        <h2>Needs Attention</h2>
+        <div id="stale-cards" class="cards"></div>
+        <div id="stale-empty" class="empty" hidden>No stale tasks.</div>
+      </section>
+      <section class="board">
+        <h2>Completed</h2>
+        <div id="completed-cards" class="cards compact"></div>
+        <div id="completed-empty" class="empty" hidden>No completed tasks.</div>
+        <div id="completed-extra" class="more-note" hidden></div>
+      </section>
+    </main>
+    <script type="module">
+      const statusEl = document.getElementById("status");
+      const countsEl = document.getElementById("counts");
+      const activeCards = document.getElementById("active-cards");
+      const staleCards = document.getElementById("stale-cards");
+      const completedCards = document.getElementById("completed-cards");
+      const empties = {
+        active: document.getElementById("active-empty"),
+        stale: document.getElementById("stale-empty"),
+        completed: document.getElementById("completed-empty"),
+      };
+      const completedExtra = document.getElementById("completed-extra");
+      const clearCompletedBtn = document.getElementById("clear-completed");
+      const clearStaleBtn = document.getElementById("clear-stale");
+
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const endpoint = `${protocol}://${window.location.host}/ws`;
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const wsUrl = token ? `${endpoint}?token=${encodeURIComponent(token)}` : endpoint;
+      const ws = new WebSocket(wsUrl);
+
+      const API_BASE = `${window.location.protocol}//${window.location.host}`;
+
+      ws.addEventListener("open", () => {
+        statusEl.textContent = "Connected";
+      });
+
+      ws.addEventListener("close", () => {
+        statusEl.textContent = "Disconnected — retry in 5s";
+        setTimeout(() => window.location.reload(), 5000);
+      });
+
+      ws.addEventListener("message", (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          render(payload.tasks || {});
+        } catch (err) {
+          console.error("Failed to parse message", err);
+        }
+      });
+
+      async function apiDelete(path, search = new URLSearchParams()) {
+        if (token) {
+          search.set("token", token);
+        }
+        const query = search.toString();
+        const url = query ? `${API_BASE}${path}?${query}` : `${API_BASE}${path}`;
+        const res = await fetch(url, { method: "DELETE", credentials: "same-origin" });
+        if (!res.ok) {
+          throw new Error(`Request failed: ${res.status}`);
+        }
+        return res.json().catch(() => ({}));
+      }
+
+      async function deleteTask(taskId) {
+        try {
+          await apiDelete(`/tasks/${encodeURIComponent(taskId)}`);
+        } catch (err) {
+          console.error("Failed to delete task", err);
+        }
+      }
+
+      async function clearStatus(status) {
+        try {
+          const search = new URLSearchParams();
+          search.set("status", status);
+          await apiDelete("/tasks", search);
+        } catch (err) {
+          console.error("Failed to clear tasks", err);
+        }
+      }
+
+      clearCompletedBtn.addEventListener("click", () => clearStatus("close"));
+      clearStaleBtn.addEventListener("click", () => clearStatus("stale"));
+
+      document.addEventListener("click", (event) => {
+        const action = event.target.closest("button[data-action]");
+        if (!action) return;
+        const taskId = action.dataset.id;
+        if (action.dataset.action === "discard" && taskId) {
+          deleteTask(taskId);
+        }
+      });
+
+      function render(tasks) {
+        const entries = Object.values(tasks)
+          .map((task) => ({
+            ...task,
+            progress:
+              typeof task.total === "number" && task.total > 0
+                ? Math.min(100, (task.n || 0) / task.total * 100)
+                : 0,
+          }))
+          .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+
+        const buckets = {
+          active: [],
+          stale: [],
+          completed: [],
+        };
+
+        for (const task of entries) {
+          if (task.status === "close") {
+            buckets.completed.push(task);
+          } else if (task.status === "stale") {
+            buckets.stale.push(task);
+          } else {
+            buckets.active.push(task);
+          }
+        }
+
+        renderBucket(activeCards, "active", buckets.active);
+        renderBucket(staleCards, "stale", buckets.stale);
+        renderCompleted(buckets.completed);
+
+        countsEl.textContent = `Active ${buckets.active.length} • Stale ${buckets.stale.length} • Completed ${buckets.completed.length}`;
+        clearCompletedBtn.disabled = buckets.completed.length === 0;
+        clearStaleBtn.disabled = buckets.stale.length === 0;
+      }
+
+      function renderBucket(container, name, list) {
+        const emptyEl = empties[name];
+        if (!list.length) {
+          container.innerHTML = "";
+          emptyEl.hidden = false;
+          return;
+        }
+        emptyEl.hidden = true;
+        container.innerHTML = list.map((task) => renderCard(task)).join("");
+      }
+
+      function renderCompleted(list) {
+        const emptyEl = empties.completed;
+        if (!list.length) {
+          completedCards.innerHTML = "";
+          emptyEl.hidden = false;
+          completedExtra.hidden = true;
+          return;
+        }
+        emptyEl.hidden = true;
+        const limit = 6;
+        const visible = list.slice(0, limit);
+        completedCards.innerHTML = visible.map((task) => renderCard(task)).join("");
+        const remaining = list.length - visible.length;
+        if (remaining > 0) {
+          completedExtra.hidden = false;
+          completedExtra.textContent = `+ ${remaining} more completed task${remaining === 1 ? "" : "s"} — clear or discard to hide`;
+        } else {
+          completedExtra.hidden = true;
+        }
+      }
+
+      function renderCard(task) {
+        const status = task.status || "update";
+        const desc = task.desc ? ` — ${task.desc}` : "";
+        const unit = task.unit || "";
+        const total = task.total ?? "∞";
+        const current = task.n ?? 0;
+        const pct = task.progress.toFixed(1);
+        const updated = task.updated_at
+          ? new Date(task.updated_at * 1000).toLocaleTimeString()
+          : "";
+        const badgeClass = status === "close" ? "close" : status === "stale" ? "stale" : "";
+        return `
+          <article class="card" data-status="${status}">
+            <div class="card-header">
+              <h2>${task.task_id}${desc}</h2>
+              <div class="card-actions">
+                <span class="badge ${badgeClass}">${status}</span>
+                <button class="card-action" data-action="discard" data-id="${task.task_id}">Discard</button>
+              </div>
+            </div>
+            <div class="bar">
+              <div class="fill" style="width:${pct}%"></div>
+            </div>
+            <div class="meta">
+              <span>${current} / ${total} ${unit}</span>
+              <span>${pct}%</span>
+            </div>
+            <div class="meta">
+              <span>Updated ${updated || "—"}</span>
+              <span>${task.created_at ? `Started ${new Date(task.created_at * 1000).toLocaleTimeString()}` : ""}</span>
+            </div>
+          </article>
+        `;
+      }
+    </script>
+  </body>
+</html>
