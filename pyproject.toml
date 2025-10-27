@@ -57,7 +57,9 @@ progressista = "progressista.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["progressista"]
-force-include = {"progressista/static" = "progressista/static"}
+
+[tool.hatch.build.targets.wheel.package-data]
+"progressista" = ["static/**"]
 
 [tool.hatch.build.targets.sdist]
 include = [

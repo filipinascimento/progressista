@@ -410,7 +410,16 @@ def run_server(settings: ServerSettings | None = None) -> None:
         log_level="info",
     )
     server = uvicorn.Server(config)
-    LOGGER.info("Starting Progressista server on %s:%s", settings.host, settings.port)
+    display_host = settings.host
+    if display_host in ("0.0.0.0", "::"):
+        display_host = "localhost"
+    LOGGER.info(
+        "Starting Progressista server on %s:%s — dashboard at http://%s:%s/static/index.html",
+        settings.host,
+        settings.port,
+        display_host,
+        settings.port,
+    )
     server.run()
 
 
