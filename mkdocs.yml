@@ -19,6 +19,7 @@ nav:
   - Home: index.md
   - Architecture: architecture.md
   - Server: server.md
+  - Configuration: configuration.md
   - Client: client.md
   - Runbook: runbook.md
   - Hosting: hosting.md

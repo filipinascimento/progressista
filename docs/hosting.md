@@ -10,6 +10,17 @@ PaaS. Below are options and quickstart notes.
 3. Expose ports for both HTTP (`/progress`, `/tasks`, `/health`) and WebSocket
    (`/ws`).
 4. Serve the dashboard (`/static/index.html`) behind TLS if the service is public.
+5. Set `PROGRESSISTA_STORAGE_PATH` if you want task state to survive restarts.
+
+## Persisting state
+
+Progressista can snapshot active tasks to disk so they reappear after a crash or
+reboot. Point `PROGRESSISTA_STORAGE_PATH` at a writable location (for example
+`/var/lib/progressista/state.json` or a mounted volume when running in Docker).
+When the server restarts it will reload the snapshot, surface unfinished tasks
+in the **Recovered** column, and move them back to **Active** automatically as
+soon as new progress updates arrive. Completed tasks remain available until the
+retention policy removes them or you clear them from the dashboard.
 
 ## Free-tier friendly platforms
 
@@ -29,15 +40,28 @@ VPS (e.g. Lightsail, Hetzner) with systemd.
 ```dockerfile
 FROM python:3.12-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
 WORKDIR /app
-COPY . .
+
+COPY pyproject.toml README.md requirements.txt ./
+COPY progressista progressista
+
 RUN pip install --no-cache-dir .
 
-ENV PROGRESSISTA_HOST=0.0.0.0
-ENV PROGRESSISTA_PORT=8000
+EXPOSE 8000
+
+ENV PROGRESSISTA_HOST=0.0.0.0 \
+    PROGRESSISTA_PORT=8000
 
 CMD ["progressista", "serve", "--host", "0.0.0.0", "--port", "8000"]
 ```
+
+The repository includes this `Dockerfile` at the project root so you can build
+directly with `docker build -t progressista .`. Mount a volume to supply a
+`PROGRESSISTA_STORAGE_PATH` if you need persistent dashboards.
 
 Deploy the image to your chosen platform and expose port 8000.
 

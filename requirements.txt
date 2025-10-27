@@ -1,0 +1,4 @@
+# Canonical dependencies are declared in pyproject.toml (PEP 621).
+# This file exists for platforms that expect a requirements.txt entry point.
+# Installing the project via an editable install ensures pip reads pyproject.toml.
+-e .

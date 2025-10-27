@@ -117,8 +117,9 @@ Docker images, systemd units, or cloud runners:
 | --- | --- | --- |
 | `PROGRESSISTA_HOST` | Interface for the server to bind | `0.0.0.0` |
 | `PROGRESSISTA_PORT` | Port used by `progressista serve` | `8000` |
+| `PROGRESSISTA_STORAGE_PATH` | JSON file that stores task snapshots for crash recovery | unset |
 | `PROGRESSISTA_ALLOW_ORIGINS` | Comma-separated CORS origins | disabled |
-| `PROGRESSISTA_RETENTION_SECONDS` | Keep closed tasks visible for (s) | `120` |
+| `PROGRESSISTA_RETENTION_SECONDS` | Keep closed tasks visible for (s) | `86400` |
 | `PROGRESSISTA_CLEANUP_INTERVAL` | Cleanup frequency (s) | `5` |
 | `PROGRESSISTA_SERVER_URL` | Default client post URL | `http://localhost:8000/progress` |
 | `PROGRESSISTA_PUSH_INTERVAL` | Client throttle window in seconds | `0.25` |

@@ -32,8 +32,9 @@ class ServerSettings:
 
     host: str = os.getenv("PROGRESSISTA_HOST", "0.0.0.0")
     port: int = _int_env("PROGRESSISTA_PORT", 8000)
+    storage_path: str | None = os.getenv("PROGRESSISTA_STORAGE_PATH")
     cleanup_interval: float = _float_env("PROGRESSISTA_CLEANUP_INTERVAL", 5.0)
-    retention_seconds: float = _float_env("PROGRESSISTA_RETENTION_SECONDS", 120.0)
+    retention_seconds: float = _float_env("PROGRESSISTA_RETENTION_SECONDS", 86400.0)
     stale_seconds: float = _float_env("PROGRESSISTA_STALE_SECONDS", 0.0)
     max_task_age: float = _float_env("PROGRESSISTA_MAX_TASK_AGE", 0.0)
     allow_origins: tuple[str, ...] = ()

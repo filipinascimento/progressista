@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import logging
 import time
 from importlib import resources
+from pathlib import Path
 from typing import Any, Dict, Set
 
 import uvicorn
@@ -57,6 +59,16 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
     static_dir = resources.files("progressista") / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
+    storage_path: Path | None = None
+    if settings.storage_path:
+        candidate = Path(settings.storage_path).expanduser()
+        try:
+            candidate.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            LOGGER.exception("Failed to prepare storage directory for %s", candidate)
+        else:
+            storage_path = candidate
+
     # Mutable state kept on the app object.
     app.state.tasks: Dict[str, Dict[str, Any]] = {}
     app.state.state_lock = asyncio.Lock()
@@ -64,6 +76,70 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
     app.state.watchers_lock = asyncio.Lock()
     app.state.settings = settings
     app.state.cleanup_task: asyncio.Task[None] | None = None
+    app.state.storage_path = storage_path
+    app.state.persist_lock = asyncio.Lock()
+
+    def load_persisted_tasks(path: Path | None) -> Dict[str, Dict[str, Any]]:
+        if not path or not path.exists():
+            return {}
+        try:
+            with path.open("r", encoding="utf-8") as source:
+                payload = json.load(source)
+        except Exception:
+            LOGGER.exception("Failed to load persisted tasks from %s", path)
+            return {}
+        tasks = payload.get("tasks")
+        if not isinstance(tasks, dict):
+            return {}
+        now = time.time()
+        restored: Dict[str, Dict[str, Any]] = {}
+        for task_id, raw in tasks.items():
+            if not isinstance(task_id, str) or not isinstance(raw, dict):
+                continue
+            task = dict(raw)
+            task["task_id"] = task.get("task_id", task_id)
+            task.setdefault("created_at", now)
+            task.setdefault("updated_at", task.get("created_at", now))
+            status = str(task.get("status", "recovered") or "recovered")
+            if status == "close":
+                task["status"] = "close"
+            elif status == "stale":
+                task["status"] = "stale"
+            else:
+                task["status"] = "recovered"
+            task["recovered"] = True
+            task["recovered_at"] = now
+            restored[task_id] = task
+        return restored
+
+    async def persist_state(snapshot: Dict[str, Dict[str, Any]]) -> None:
+        path: Path | None = app.state.storage_path
+        if not path:
+            return
+        data = {
+            "tasks": snapshot,
+            "version": __version__,
+            "saved_at": time.time(),
+        }
+        json_payload = json.dumps(data, ensure_ascii=True, separators=(",", ":"))
+        async with app.state.persist_lock:
+            loop = asyncio.get_running_loop()
+
+            def write_snapshot() -> None:
+                tmp_path = path.with_suffix(".tmp")
+                with tmp_path.open("w", encoding="utf-8") as target:
+                    target.write(json_payload)
+                tmp_path.replace(path)
+
+            try:
+                await loop.run_in_executor(None, write_snapshot)
+            except Exception:
+                LOGGER.exception("Failed to persist tasks to %s", path)
+
+    if storage_path:
+        persisted = load_persisted_tasks(storage_path)
+        if persisted:
+            app.state.tasks.update(persisted)
 
     if settings.allow_origins:
         app.add_middleware(
@@ -144,6 +220,7 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
                     updated = bool(removed_ids) or stale_changed
                 if updated:
                     snapshot = await get_snapshot()
+                    await persist_state(snapshot)
                     await broadcast(snapshot)
         except asyncio.CancelledError:  # pragma: no cover - clean shutdown
             LOGGER.info("Cleanup loop cancelled.")
@@ -240,9 +317,13 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
             if task["status"] == "close":
                 task.setdefault("done_at", now)
 
+            task.pop("recovered", None)
+            task.pop("recovered_at", None)
+
             app.state.tasks[event.task_id] = task
 
         snapshot = await get_snapshot()
+        await persist_state(snapshot)
         await broadcast(snapshot)
 
         return {"ok": True}
@@ -282,6 +363,7 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
             removed = app.state.tasks.pop(task_id, None)
         if removed:
             snapshot = await get_snapshot()
+            await persist_state(snapshot)
             await broadcast(snapshot)
         return {"removed": bool(removed)}
 
@@ -307,6 +389,7 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
                 app.state.tasks.pop(task_id, None)
         if removed_ids:
             snapshot = await get_snapshot()
+            await persist_state(snapshot)
             await broadcast(snapshot)
         return {"removed": removed_ids}
 

@@ -11,17 +11,18 @@ progressista serve --host 0.0.0.0 --port 8000
 
 Extra flags (or environment variables) let you tailor behaviour:
 
-| Option | Environment | Description |
-| --- | --- | --- |
-| `--host` | `PROGRESSISTA_HOST` | Interface to bind (default `0.0.0.0`). |
-| `--port` | `PROGRESSISTA_PORT` | Port to listen on (default `8000`). |
-| `--retention-seconds` | `PROGRESSISTA_RETENTION_SECONDS` | How long to retain closed tasks (`120`). |
-| `--cleanup-interval` | `PROGRESSISTA_CLEANUP_INTERVAL` | Interval for pruning closed tasks (`5`). |
-| `--allow-origins` | `PROGRESSISTA_ALLOW_ORIGINS` | Comma separated CORS allow-list. |
-| *(N/A)* | `PROGRESSISTA_STALE_SECONDS` | Mark active tasks as `stale` after this many idle seconds (`0` disables). |
-| *(N/A)* | `PROGRESSISTA_MAX_TASK_AGE` | Drop tasks older than this many seconds regardless of status (`0` disables). |
-| *(N/A)* | `PROGRESSISTA_API_TOKEN` | Single bearer token accepted for writes and dashboard access. |
-| *(N/A)* | `PROGRESSISTA_API_TOKENS` | Comma separated set of valid bearer tokens. |
+| Option | Environment | Default | Description |
+| --- | --- | --- | --- |
+| `--host` | `PROGRESSISTA_HOST` | `0.0.0.0` | Interface to bind. |
+| `--port` | `PROGRESSISTA_PORT` | `8000` | Port to listen on. |
+| — | `PROGRESSISTA_STORAGE_PATH` | (unset) | Absolute or relative path for persisted task snapshots. |
+| `--retention-seconds` | `PROGRESSISTA_RETENTION_SECONDS` | `86400` | How long to keep closed tasks before purging. |
+| `--cleanup-interval` | `PROGRESSISTA_CLEANUP_INTERVAL` | `5` | Seconds between cleanup runs. |
+| `--allow-origins` | `PROGRESSISTA_ALLOW_ORIGINS` | (empty) | Comma separated CORS allow-list. |
+| — | `PROGRESSISTA_STALE_SECONDS` | `0` | Mark active tasks as `stale` after this many idle seconds (`0` disables). |
+| — | `PROGRESSISTA_MAX_TASK_AGE` | `0` | Drop tasks older than this many seconds regardless of status (`0` disables). |
+| — | `PROGRESSISTA_API_TOKEN` | (empty) | Single bearer token accepted for writes and dashboard access. |
+| — | `PROGRESSISTA_API_TOKENS` | (empty) | Comma separated set of valid bearer tokens (overrides `PROGRESSISTA_API_TOKEN`). |
 
 Example with authentication via reverse proxy:
 
@@ -31,6 +32,11 @@ PROGRESSISTA_RETENTION_SECONDS=300 \
 PROGRESSISTA_API_TOKEN="super-secret" \
 progressista serve --host 127.0.0.1 --port 9000
 ```
+
+Set `PROGRESSISTA_STORAGE_PATH` to a writable JSON file (for example
+`/var/lib/progressista/state.json`) when you need dashboards to survive restarts.
+Review [Configuration](configuration.md) for a complete list of server and
+client knobs.
 
 Expose the dashboard by fronting the server with nginx/Traefik/Caddy and proxy
 both `/progress` and `/ws`.
